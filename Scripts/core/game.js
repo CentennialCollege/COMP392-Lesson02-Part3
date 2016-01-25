@@ -39,9 +39,6 @@ function init() {
     scene = new Scene();
     setupRenderer(); // setup the default renderer
     setupCamera(); // setup the camera
-    //scene.fog=new THREE.FogExp2( 0xffffff, 0.015 );
-    scene.fog = new THREE.Fog(0xffffff, 0.015, 100);
-    console.log("Added Fog to scene...");
     // add an axis helper to the scene
     axes = new AxisHelper(20);
     scene.add(axes);
@@ -52,26 +49,67 @@ function init() {
     scene.add(plane);
     console.log("Added Plane Primitive to scene...");
     // Add an AmbientLight to the scene
-    ambientLight = new AmbientLight(0x0c0c0c);
+    ambientLight = new AmbientLight(0x090909);
     scene.add(ambientLight);
     console.log("Added an Ambient Light to Scene");
     // Add a SpotLight to the scene
     spotLight = new SpotLight(0xffffff);
-    spotLight.position.set(-40, 60, -10);
+    spotLight.position.set(-40, 40, 50);
     spotLight.castShadow = true;
     scene.add(spotLight);
     console.log("Added a SpotLight Light to Scene");
-    // add controls
-    gui = new GUI();
-    control = new Control(0.02, 60, 40);
-    addControl(control);
-    console.log("Added Control to scene...");
+    // add geometries
+    addGeometries(scene);
+    console.log("Added various Geometries to scene...");
     // Add framerate stats
     addStatsObject();
     console.log("Added Stats to scene...");
     document.body.appendChild(renderer.domElement);
     gameLoop(); // render the scene	
     window.addEventListener('resize', onResize, false);
+}
+function addGeometries(scene) {
+    var geoms = new Array();
+    geoms.push(new THREE.CylinderGeometry(1, 4, 4));
+    // basic cube
+    geoms.push(new THREE.CubeGeometry(2, 2, 2));
+    console.log(new THREE.CubeGeometry(2, 2, 2));
+    // basic spherer
+    geoms.push(new THREE.SphereGeometry(2));
+    geoms.push(new THREE.IcosahedronGeometry(4, 1));
+    // create a lathgeometry
+    //http://en.wikipedia.org/wiki/Lathe_(graphics)
+    var pts = []; //points array - the path profile points will be stored here
+    var detail = .1; //half-circle detail - how many angle increments will be used to generate points
+    var radius = 3; //radius for half_sphere
+    for (var angle = 0.0; angle < Math.PI; angle += detail) {
+        pts.push(new THREE.Vector3(Math.cos(angle) * radius, 0, Math.sin(angle) * radius)); //angle/radius to x,z
+    }
+    geoms.push(new THREE.LatheGeometry(pts, 12));
+    // create a OctahedronGeometry
+    geoms.push(new THREE.OctahedronGeometry(3, 1));
+    geoms.push(new THREE.TetrahedronGeometry(3));
+    geoms.push(new THREE.TorusGeometry(3, 1, 10, 10));
+    geoms.push(new THREE.TorusKnotGeometry(3, 0.5, 50, 20));
+    var positionIndex = 0;
+    for (var index = 0; index < geoms.length; index++) {
+        var cubeMaterial = new THREE.MeshLambertMaterial({ wireframe: true, color: Math.random() * 0xffffff });
+        var materials = [
+            new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff, shading: THREE.FlatShading }),
+            new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true })
+        ];
+        var mesh = THREE.SceneUtils.createMultiMaterialObject(geoms[index], materials);
+        mesh.traverse(function (e) { e.castShadow = true; });
+        //var mesh = new THREE.Mesh(geoms[i],materials[i]);
+        //mesh.castShadow=true;
+        mesh.position.x = -24 + ((index % 4) * 12);
+        mesh.position.y = 4;
+        mesh.position.z = -8 + (positionIndex * 12);
+        if ((index + 1) % 4 == 0) {
+            positionIndex++;
+        }
+        scene.add(mesh);
+    }
 }
 function onResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -96,14 +134,6 @@ function addStatsObject() {
 // Setup main game loop
 function gameLoop() {
     stats.update();
-    // rotate the cubes around its axes
-    scene.traverse(function (threeObject) {
-        if (threeObject instanceof Mesh && threeObject != plane) {
-            threeObject.rotation.x += control.rotationSpeed;
-            threeObject.rotation.y += control.rotationSpeed;
-            threeObject.rotation.z += control.rotationSpeed;
-        }
-    });
     // render using requestAnimationFrame
     requestAnimationFrame(gameLoop);
     // render the scene
@@ -120,10 +150,10 @@ function setupRenderer() {
 // Setup main camera for the scene
 function setupCamera() {
     camera = new PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.x = -30;
-    camera.position.y = 40;
-    camera.position.z = 30;
-    camera.lookAt(scene.position);
+    camera.position.x = -50;
+    camera.position.y = 30;
+    camera.position.z = 20;
+    camera.lookAt(new Vector3(-10, 0, 0));
     console.log("Finished setting up Camera...");
 }
 //# sourceMappingURL=game.js.map
